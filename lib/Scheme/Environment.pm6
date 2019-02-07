@@ -13,6 +13,8 @@ sub get-build-ins() {
     %map</>       = sub (*@a) { [/] @a };
     %map<sqrt>    = sub ($a)  { sqrt($a) };
     %map<display> = sub ($a)  { say $a };
+    %map<pi>      = pi;
+    %map<π>       = pi;
     return %map;
 }
 

@@ -12,13 +12,15 @@ sub parse(Str $program) is export {
     return $match
 }
 
-multi sub evaluate($ast) is export {
-    my $env = Scheme::Environment.get-global-environment();
+sub environment() is export {
+    return Scheme::Environment.get-global-environment();
+}
 
+multi sub evaluate($ast, :$env = environment() ) is export {
     execute $ast, $env;
 }
-multi sub evaluate(Match $m) is export {
-    evaluate $m.made;
+multi sub evaluate(Match $m, :$env = environment() ) is export {
+    evaluate $m.made, :$env;
 }
 
 multi sub execute(Scheme::AST::Expressions $ast, $env) {
@@ -40,6 +42,19 @@ multi sub execute(Scheme::AST::Definition $ast, $env) {
 }
 multi sub execute(Scheme::AST::Variable $ast, $env) {
     return $env.lookup($ast.identifier);
+}
+multi sub execute(Scheme::AST::Lambda $ast, $env) {
+    my $scope = $env.make-new-scope();
+    sub (*@a) {
+        for |$ast.params -> $name {
+            $scope.set: $name => shift @a
+        }
+
+        for $ast.expressions {
+            my $x = execute $_, $scope;
+            LAST { return $x }
+        }
+    }
 }
 
 multi sub execute($any where { not .does: Scheme::AST }, $env) {

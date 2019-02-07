@@ -23,3 +23,8 @@ class Scheme::AST::Definition does Scheme::AST {
 class Scheme::AST::Variable does Scheme::AST {
     has $.identifier is required;
 }
+
+class Scheme::AST::Lambda does Scheme::AST {
+    has @.params is required;
+    has @.expressions is required;
+}

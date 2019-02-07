@@ -2,18 +2,20 @@ use v6;
 
 use Scheme;
 
-multi sub MAIN(IO::Path $file) {
-    my $program = $file.slurp;
+multi sub MAIN(Str $file) {
+    my $program = $file.IO.slurp;
     my $match = parse($program);
     evaluate($match);
 }
 
 #`(REPL)
 multi sub MAIN() {
+    my $env = environment();
     loop {
         my $program = prompt ">>> ";
         try {
-            say evaluate parse $program;
+            my $match = parse $program;
+            say evaluate $match, :$env;
             CATCH { default { .note } }
         }
     }

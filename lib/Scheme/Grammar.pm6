@@ -29,7 +29,7 @@ grammar Scheme::Grammar {
     }
 
     # helper tokens
-    token initial    { <alnum> | <[- + * / $ % & : < = > ? ~ _ ^ ]> }
+    token initial    { <alpha> | <[- + * / $ % & : < = > ? ~ _ ^ ]> }
     token subsequent { <initial> | \d  }
     token backspace  { \\ }
 
@@ -50,7 +50,7 @@ grammar Scheme::Grammar {
 
     rule list {
         '(' [
-        <definition> | <conditional> | <proc-call>
+        <definition> | <conditional> | <proc-call> | <lambda>
         ] ')'
     }
 
@@ -64,5 +64,9 @@ grammar Scheme::Grammar {
 
     rule proc-call {
         <identifier> <expression>*
+    }
+
+    rule lambda {
+        'lambda' '(' <identifier>* ')' <expression>+
     }
 }

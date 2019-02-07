@@ -65,6 +65,9 @@ class Scheme::Action {
     multi method list($/ where $<proc-call>) {
         make $<proc-call>.made;
     }
+    multi method list($/ where $<lambda>) {
+        make $<lambda>.made;
+    }
 
     method definition($/) {
         make Scheme::AST::Definition.new:
@@ -82,6 +85,12 @@ class Scheme::Action {
     method proc-call($/) {
         make Scheme::AST::ProcCall.new:
         identifier => ~$<identifier>,
+        expressions => $<expression>>>.made;
+    }
+
+    method lambda($/) {
+        make Scheme::AST::Lambda.new:
+        params => | $<identifier>.grep( ~ * ),
         expressions => $<expression>>>.made;
     }
 }
