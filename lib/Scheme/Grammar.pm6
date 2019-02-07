@@ -31,15 +31,15 @@ grammar Scheme::Grammar {
     # helper tokens
     token initial    { <alnum> | <[- + * / $ % & : < = > ? ~ _ ^ ]> }
     token subsequent { <initial> | \d  }
-    token bs         { \\ }
+    token backspace  { \\ }
 
     # numbers
     token number    { \d+ }
     token string    { '"' <string-char>*  '"' }
     token string-char {
         | \w
-        | <.bs><.bs> # literally \\
-        | <.bs> '"'  # literally \"
+        | <.backspace><.backspace> # literally \\
+        | <.backspace> '"'  # literally \"
     }
     token character {
         | [ '#\\' \w ]
