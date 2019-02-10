@@ -50,7 +50,7 @@ grammar Scheme::Grammar {
 
     rule list-expression {
         '(' [
-        <definition> | <conditional> | <proc-call> | <lambda>
+        <definition> | <conditional> | <proc-call> | <lambda> | <quote>
         ] ')'
     }
 
@@ -68,5 +68,17 @@ grammar Scheme::Grammar {
 
     rule lambda {
         'lambda' '(' <identifier>* ')' <expression>+
+    }
+
+    rule quote {
+        'quote' <datum>
+    }
+
+    rule datum {
+        <atom> | <list>
+    }
+
+    rule list {
+        '(' <datum>* ')'
     }
 }

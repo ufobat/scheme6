@@ -68,6 +68,9 @@ class Scheme::Action {
     multi method list-expression($/ where $<lambda>) {
         make $<lambda>.made;
     }
+    multi method list-expression($/ where $<quote>) {
+        make $<quote>.made;
+    }
 
     method definition($/) {
         make Scheme::AST::Definition.new:
@@ -92,5 +95,21 @@ class Scheme::Action {
         make Scheme::AST::Lambda.new:
         params => | $<identifier>.grep( ~ * ),
         expressions => $<expression>>>.made;
+    }
+
+    method quote($/) {
+        make Scheme::AST::Quote.new:
+        datum => $<datum>.made;
+    }
+
+    multi method datum($/ where $<atom>) {
+        make $<atom>.made;
+    }
+    multi method datum($/ where $<list>) {
+        make $<list>.made;
+    }
+
+    method list($/) {
+        make $<datum>>>.made
     }
 }

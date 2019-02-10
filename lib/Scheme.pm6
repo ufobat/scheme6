@@ -60,6 +60,9 @@ multi sub execute(Scheme::AST::Conditional $ast, $env) {
     my $val = execute($ast.expression, $env);
     execute($val ?? $ast.conseq !! $ast.alt, $env);
 }
+multi sub execute(Scheme::AST::Quote $ast, $env) {
+    return $ast.datum;
+}
 
 multi sub execute($any where { not .does: Scheme::AST }, $env) {
     return $any;

@@ -31,5 +31,13 @@ subtest {
     is evaluate($ast), 3628800, 'fact 10';
 }, 'fact 10';
 
+subtest {
+    $scheme-code = Q{
+        (quote (1 2 3))
+    };
+    $ast = test-parse($scheme-code);
+    is-deeply evaluate($ast), [1, 2, 3], 'same list';
+}, 'quote list';
+
 done-testing;
 

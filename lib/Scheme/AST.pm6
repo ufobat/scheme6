@@ -28,3 +28,7 @@ class Scheme::AST::Lambda does Scheme::AST {
     has @.params is required;
     has @.expressions is required;
 }
+
+class Scheme::AST::Quote does Scheme::AST {
+    has $.datum is required;
+}
