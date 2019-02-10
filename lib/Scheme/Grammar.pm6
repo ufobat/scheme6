@@ -2,12 +2,12 @@ use v6;
 
 grammar Scheme::Grammar {
     rule TOP {
-        <expression>+
+        <.ws>?  <expression>+
     }
 
     rule expression {
         | <atom>
-        | <list>
+        | <list-expression>
     }
 
     token atom {
@@ -48,7 +48,7 @@ grammar Scheme::Grammar {
     }
     token boolean   { '#f' | '#t' }
 
-    rule list {
+    rule list-expression {
         '(' [
         <definition> | <conditional> | <proc-call> | <lambda>
         ] ')'

@@ -9,8 +9,8 @@ class Scheme::Action {
     multi method expression($/ where $<atom>) {
         make $<atom>.made;
     }
-    multi method expression($/ where $<list>) {
-        make $<list>.made;
+    multi method expression($/ where $<list-expression>) {
+        make $<list-expression>.made;
     }
 
     multi method atom($/ where $<variable>) {
@@ -56,16 +56,16 @@ class Scheme::Action {
         make $/ eq '#t';
     }
 
-    multi method list($/ where $<definition>) {
+    multi method list-expression($/ where $<definition>) {
         make $<definition>.made;
     }
-    multi method list($/ where $<conditional>) {
+    multi method list-expression($/ where $<conditional>) {
         make $<conditional>.made;
     }
-    multi method list($/ where $<proc-call>) {
+    multi method list-expression($/ where $<proc-call>) {
         make $<proc-call>.made;
     }
-    multi method list($/ where $<lambda>) {
+    multi method list-expression($/ where $<lambda>) {
         make $<lambda>.made;
     }
 
