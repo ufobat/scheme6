@@ -36,8 +36,38 @@ subtest {
         (quote (1 2 3))
     };
     $ast = test-parse($scheme-code);
-    is-deeply evaluate($ast), [1, 2, 3], 'same list';
+    is-deeply evaluate($ast), [1, 2, 3], 'correct list';
 }, 'quote list';
+
+subtest {
+    $scheme-code = Q{
+        (equal?
+         (quote (1 2 3))
+         (quote (1 2 3))
+        )
+    };
+    $ast = test-parse($scheme-code);
+    is-deeply evaluate($ast), True, 'same list';
+}, 'equal? list';
+
+subtest {
+    $scheme-code = Q{
+        (eqv?
+         (quote (1 2 3))
+         (quote (1 2 3))
+        )
+    };
+    $ast = test-parse($scheme-code);
+    is-deeply evaluate($ast), False, 'different objects';
+}, 'eqv list';
+
+subtest {
+    $scheme-code = Q{
+        (car (cdr (list 1 2 3 4)))
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 2, 'car cdr list';
+}, 'eqv list';
 
 done-testing;
 

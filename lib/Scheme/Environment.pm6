@@ -7,18 +7,24 @@ has $.parent;
 
 sub get-build-ins() {
     my %map;
-    %map<+>       = sub (*@a)    { [+] @a };
-    %map<->       = sub (*@a)    { [-] @a };
-    %map<*>       = sub (*@a)    { [*] @a };
-    %map</>       = sub (*@a)    { [/] @a };
-    %map{ '<' }   = sub ($a, $b) { $a < $b };
-    %map{ '>' }   = sub ($a, $b) { $a > $b };
-    %map{ '<=' }  = sub ($a, $b) { $a <= $b };
-    %map{ '>=' }  = sub ($a, $b) { $a >= $b };
-    %map<sqrt>    = sub ($a)     { sqrt($a) };
-    %map<display> = sub ($a)     { say $a };
+    %map<+>       = sub (*@a)    { [+] @a    };
+    %map<->       = sub (*@a)    { [-] @a    };
+    %map<*>       = sub (*@a)    { [*] @a    };
+    %map</>       = sub (*@a)    { [/] @a    };
+    %map{ '>' }   = sub ($a, $b) { $a > $b   };
+    %map{ '<' }   = sub ($a, $b) { $a < $b   };
+    %map{ '<=' }  = sub ($a, $b) { $a <= $b  };
+    %map{ '>=' }  = sub ($a, $b) { $a >= $b  };
+    %map<sqrt>    = sub ($a)     { sqrt($a)  };
+    %map<display> = sub ($a)     { say $a    };
     %map<pi>      = pi;
     %map<π>       = pi;
+    %map<cdr>     = sub (*@a)    { @a[1..*]  };
+    %map<car>     = sub (*@a)    { @a[0]     };
+    %map<list>    = sub (*@a)    { @a        };
+    %map<eq?>     = sub ($a, $b) { $a === $b };   # object identity
+    %map<eqv?>    = sub ($a, $b) { $a === $b };   # object identity
+    %map<equal?>  = sub ($a, $b) { $a eqv $b };   # objects contain the same
     return %map;
 }
 
