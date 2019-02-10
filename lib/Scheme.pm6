@@ -23,6 +23,11 @@ multi sub evaluate(Match $m, :$env = environment() ) is export {
     evaluate $m.made, :$env;
 }
 
+proto execute($ast, $env) {
+    # say $ast.perl;
+    {*}
+}
+
 multi sub execute(Scheme::AST::Expressions $ast, $env) {
     for $ast.expressions {
         my $x = execute $_, $env;
@@ -48,8 +53,8 @@ multi sub execute(Scheme::AST::Variable $ast, $env) {
     return $var;
 }
 multi sub execute(Scheme::AST::Lambda $ast, $env) {
-    my $scope = $env.make-new-scope();
     sub (*@a) {
+        my $scope = $env.make-new-scope();
         for |$ast.params -> $name {
             $scope.set: $name => shift @a
         }

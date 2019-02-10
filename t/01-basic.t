@@ -79,5 +79,22 @@ subtest {
     is-deeply evaluate($ast), [2,3,4] , 'variable lookup';
 }, 'variable lookup';
 
+subtest {
+    $scheme-code = Q{
+        (define fib
+         (lambda (n)
+          (if
+           (<= n 2)
+           1
+           (+ (fib (- n 1)) (fib (- n 2)) )
+          )
+         )
+        )
+        (fib 10)
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 55, 'fib of 55'
+}, 'fibonacci';
+
 done-testing;
 
