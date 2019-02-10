@@ -19,7 +19,7 @@ sub get-build-ins() {
     %map<display> = sub ($a)     { say $a    };
     %map<pi>      = pi;
     %map<π>       = pi;
-    %map<cdr>     = sub (*@a)    { @a[1..*]  };
+    %map<cdr>     = sub (*@a)    { @a[1..*].Array  };
     %map<car>     = sub (*@a)    { @a[0]     };
     %map<list>    = sub (*@a)    { @a        };
     %map<eq?>     = sub ($a, $b) { $a === $b };   # object identity

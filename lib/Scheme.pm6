@@ -41,7 +41,11 @@ multi sub execute(Scheme::AST::Definition $ast, $env) {
     $env.set: $ast.identifier => $val;
 }
 multi sub execute(Scheme::AST::Variable $ast, $env) {
-    return $env.lookup($ast.identifier);
+    my $var = $env.lookup($ast.identifier);
+    if $var ~~ Positional {
+        return eager flat $var;
+    }
+    return $var;
 }
 multi sub execute(Scheme::AST::Lambda $ast, $env) {
     my $scope = $env.make-new-scope();

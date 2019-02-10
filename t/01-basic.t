@@ -69,5 +69,15 @@ subtest {
     is evaluate($ast), 2, 'car cdr list';
 }, 'eqv list';
 
+
+subtest {
+    $scheme-code = Q{
+        (define var (list 1 2 3 4))
+        (cdr var)
+    };
+    $ast = test-parse($scheme-code);
+    is-deeply evaluate($ast), [2,3,4] , 'variable lookup';
+}, 'variable lookup';
+
 done-testing;
 
