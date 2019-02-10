@@ -93,7 +93,7 @@ class Scheme::Action {
 
     method lambda($/) {
         make Scheme::AST::Lambda.new:
-        params => | $<identifier>.grep( ~ * ),
+        params => | $<identifier>.map( ~* ),
         expressions => $<expression>>>.made;
     }
 
