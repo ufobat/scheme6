@@ -5,8 +5,13 @@ class Scheme::AST::Expressions does Scheme::AST {
 }
 
 class Scheme::AST::ProcCall does Scheme::AST {
-    has Str $.identifier is required;
+    has Str $.identifier;
+    has $.lambda;
     has @.expressions is required;
+
+    submethod TWEAK {
+        die '$.identifier or $.lambda is required' unless $!identifier or $!lambda;
+    }
 }
 
 class Scheme::AST::Conditional does Scheme::AST {

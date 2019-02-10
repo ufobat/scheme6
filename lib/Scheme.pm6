@@ -36,7 +36,9 @@ multi sub execute(Scheme::AST::Expressions $ast, $env) {
 }
 
 multi sub execute(Scheme::AST::ProcCall $ast, $env) {
-    my &proc = $env.lookup($ast.identifier);
+    my &proc = $ast.identifier
+    ?? $env.lookup($ast.identifier)
+    !! execute($ast.lambda, $env);
     proc |$ast.expressions.map: {
         execute $_, $env;
     };

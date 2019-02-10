@@ -73,8 +73,12 @@ grammar Scheme::Grammar {
         'if' <test=expression> <conseq=expression> <alt=expression>
     }
 
-    rule proc-call {
+    proto rule proc-call {*}
+    rule proc-call:sym<simple> {
         <identifier> <expression>*
+    }
+    rule proc-call:sym<lambda> {
+        '(' <lambda> ')' <expression>*
     }
 
     rule lambda {

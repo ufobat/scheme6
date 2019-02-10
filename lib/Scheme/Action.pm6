@@ -94,9 +94,14 @@ class Scheme::Action {
         alt => $<alt>.made
     }
 
-    method proc-call($/) {
+    multi method proc-call:sym<simple>($/) {
         make Scheme::AST::ProcCall.new:
         identifier => ~$<identifier>,
+        expressions => $<expression>>>.made;
+    }
+    multi method proc-call:sym<lambda>($/) {
+        make Scheme::AST::ProcCall.new:
+        lambda => $<lambda>.made,
         expressions => $<expression>>>.made;
     }
 

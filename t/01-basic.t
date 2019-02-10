@@ -125,5 +125,11 @@ subtest {
     is evaluate($ast), 3, '3 not 7';
 }, 'https://www.gnu.org/software/mit-scheme/documentation/mit-scheme-ref/Static-Scoping.html';
 
+subtest {
+    $scheme-code = Q{((lambda (x) x) 13)};
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 13, 'execution of lambda';
+}
+
 done-testing;
 
