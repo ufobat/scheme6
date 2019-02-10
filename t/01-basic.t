@@ -114,5 +114,16 @@ subtest {
     is evaluate($ast), 31, '10 + 20 + 1'
 }, 'definition with lambda 2';
 
+subtest {
+    $scheme-code = Q{
+        (define x 1)
+        (define (f x) (g 2))
+        (define (g y) (+ x y))
+        (f 5)
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 3, '3 not 7';
+}, 'https://www.gnu.org/software/mit-scheme/documentation/mit-scheme-ref/Static-Scoping.html';
+
 done-testing;
 
