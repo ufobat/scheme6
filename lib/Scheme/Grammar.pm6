@@ -1,4 +1,6 @@
 use v6;
+# no precompilation;
+# use Grammar::Tracer;
 
 grammar Scheme::Grammar {
     rule TOP {
@@ -50,12 +52,21 @@ grammar Scheme::Grammar {
 
     rule list-expression {
         '(' [
-        <definition> | <conditional> | <proc-call> | <lambda> | <quote>
+            | <definition>
+            | <conditional>
+            | <lambda>
+            | <quote>
+            | <proc-call>
         ] ')'
     }
 
-    rule definition {
+    proto rule definition {*}
+    rule definition:sym<simple> {
         'define' <identifier> <expression>
+    }
+
+    rule definition:sym<lambda> {
+        'define' '(' <def-name=identifier> [<lambda-identifier=identifier> ]*  ')' <expression>+
     }
 
     rule conditional {

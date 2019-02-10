@@ -72,10 +72,19 @@ class Scheme::Action {
         make $<quote>.made;
     }
 
-    method definition($/) {
+    method definition:sym<simple>($/) {
         make Scheme::AST::Definition.new:
         identifier =>  ~$<identifier>,
         expression => $<expression>.made
+    }
+    method definition:sym<lambda>($/) {
+        make Scheme::AST::Definition.new(
+            identifier =>  ~$<def-name>,
+            expression => Scheme::AST::Lambda.new(
+                params => | $<lambda-identifier>.map( ~* ),
+                expressions => $<expression>>>.made
+            )
+        );
     }
 
     method conditional($/) {

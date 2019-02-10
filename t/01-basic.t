@@ -96,5 +96,23 @@ subtest {
     is evaluate($ast), 55, 'fib of 55'
 }, 'fibonacci';
 
+subtest {
+    $scheme-code = Q{
+        (define (xx y) (+ y 1))
+        (xx 30)
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 31, '30 + 1'
+}, 'definition with lambda 1';
+
+subtest {
+    $scheme-code = Q{
+        (define (xx z y) (+ y z 1))
+        (xx 10 20)
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 31, '10 + 20 + 1'
+}, 'definition with lambda 2';
+
 done-testing;
 
