@@ -4,7 +4,15 @@ use v6;
 
 grammar Scheme::Grammar {
     rule TOP {
-        <.ws>?  <expression>+
+        <.ws>?
+        [
+            | <expression>
+            | <.comment>
+        ]+
+    }
+
+    regex comment {
+        ';' \N*
     }
 
     rule expression {

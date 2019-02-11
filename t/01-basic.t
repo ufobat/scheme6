@@ -131,5 +131,16 @@ subtest {
     is evaluate($ast), 13, 'execution of lambda';
 }
 
+subtest {
+    $scheme-code = Q{
+        ; foo bar comment
+        (define (x) 1) ; definition with lambda
+        (x)
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 1;
+
+}, 'comment';
+
 done-testing;
 
