@@ -142,5 +142,21 @@ subtest {
 
 }, 'comment';
 
+subtest {
+    $scheme-code = Q{
+        (define-syntax three-state-macro
+         (syntax-rules (ignore e)
+          (
+              (_ x ignore e pos-body eq-body neg-body)
+              (if (> x 0) pos-body (if (= x 0) eq-body neg-body ))
+          )
+         )
+        )
+        (three-state-macro 0 ignore e (quote "P") (quote "N") (quote "Z"))
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 'N';
+}, 'macro';
+
 done-testing;
 

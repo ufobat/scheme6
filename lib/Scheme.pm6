@@ -7,6 +7,7 @@ unit module Scheme;
 
 
 sub parse(Str $program) is export {
+    my %*Macro;
     my $match = Scheme::Grammar.parse($program, actions => Scheme::Action);
     die unless $match;
     return $match
@@ -73,6 +74,10 @@ multi sub execute(Scheme::AST::Conditional $ast, $env) {
 }
 multi sub execute(Scheme::AST::Quote $ast, $env) {
     return $ast.datum;
+}
+multi sub execute(Scheme::AST::Macro $ast, $env) {
+    # macro AST definitions are processed at parsing
+    # they wont be executed
 }
 
 multi sub execute($any where { not .does: Scheme::AST }, $env) {
