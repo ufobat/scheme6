@@ -15,6 +15,7 @@ sub get-build-ins() {
     %map{ '<' }   = sub ($a, $b) { $a < $b   };
     %map{ '<=' }  = sub ($a, $b) { $a <= $b  };
     %map{ '>=' }  = sub ($a, $b) { $a >= $b  };
+    %map{ '=' }  = sub ($a, $b) { $a == $b  };   # numeric
     %map<sqrt>    = sub ($a)     { sqrt($a)  };
     %map<display> = sub ($a)     { say $a    };
     %map<pi>      = pi;

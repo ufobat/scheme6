@@ -47,7 +47,8 @@ grammar Scheme::Grammar {
     token number    { \d+ }
     token string    { '"' <string-char>*  '"' }
     token string-char {
-        | \w
+        | \w | \s
+        | <[- + * / $ . : _ ^ < = > ? ~]>  # fixme: there are others as well
         | <.backspace><.backspace> # literally \\
         | <.backspace> '"'  # literally \"
     }
@@ -64,7 +65,8 @@ grammar Scheme::Grammar {
             | <conditional>
             | <lambda>
             | <quote>
-            | <proc-call>
+            | <define-syntax>
+            | <proc-or-macro-call>
         ] ')'
     }
 
@@ -81,16 +83,28 @@ grammar Scheme::Grammar {
         'if' <test=expression> <conseq=expression> <alt=expression>
     }
 
-    proto rule proc-call {*}
-    rule proc-call:sym<simple> {
+    proto rule proc-or-macro-call {*}
+    rule proc-or-macro-call:sym<simple> {
         <identifier> <expression>*
     }
-    rule proc-call:sym<lambda> {
+    rule proc-or-macro-call:sym<lambda> {
         '(' <lambda> ')' <expression>*
     }
 
     rule lambda {
         'lambda' '(' <identifier>* ')' <expression>+
+    }
+
+    rule define-syntax {
+        'define-syntax' <keyword=identifier> <transformer-spec>+
+    }
+
+    rule transformer-spec {
+        '('
+          'syntax-rules'
+          '(' [ <literal=identifier> ]*                                  ')'
+          '(' <src-s-expression=list> <dst-s-expression=list-expression> ')'
+        ')'
     }
 
     rule quote {
