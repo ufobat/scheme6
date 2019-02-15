@@ -31,6 +31,11 @@ grammar Scheme::Grammar {
         <.initial> <.subsequent>*
     }
 
+    # for proc-calls that do not match the <identfier>
+    token build-in {
+        <[- + * /]>
+    }
+
     token constant {
         | <number>
         | <string>
@@ -83,7 +88,7 @@ grammar Scheme::Grammar {
 
     proto rule proc-call {*}
     rule proc-call:sym<simple> {
-        <identifier> <expression>*
+        [ <identifier> | <identifier=build-in> ] <expression>*
     }
     rule proc-call:sym<lambda> {
         '(' <lambda> ')' <expression>*
