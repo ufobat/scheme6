@@ -39,12 +39,12 @@ grammar Scheme::Grammar {
     }
 
     # helper tokens
-    token initial    { <alpha> | <[- + * / $ % & : < = > ? ~ _ ^ ]> }
-    token subsequent { <initial> | \d  }
+    token initial    { <alpha> | <[! $ % & : < = > ? ~ _ ^ ]> }  # ! | $ | % | & | * | / | : | < | = | > | ? | ~ | _ | ^
+    token subsequent { <initial> | \d | <[- + .]> }
     token backspace  { \\ }
 
     # numbers
-    token number    { \d+ }
+    token number    { <[- +]>? \d+ [ '.' \d+ ]? }
     token string    { '"' <string-char>*  '"' }
     token string-char {
         | \w
