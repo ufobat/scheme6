@@ -1,0 +1,20 @@
+{
+  "auth" : "cpan:ufobat",
+  "authors" : [
+    "Martin Barth"
+  ],
+  "build-depends" : [ ],
+  "depends" : [ ],
+  "description" : "blah blah blah",
+  "license" : "Artistic-2.0",
+  "name" : "Scheme",
+  "perl" : "6.c",
+  "provides" : {
+    "Scheme" : "lib/Scheme.pm6"
+  },
+  "resources" : [ ],
+  "source-url" : "",
+  "tags" : [ ],
+  "test-depends" : [ ],
+  "version" : "0.0.1"
+}
