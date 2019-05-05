@@ -1,5 +1,4 @@
 role Scheme::AST { }
-
 class Scheme::AST::Expressions does Scheme::AST {
     has @.expressions is required;
 

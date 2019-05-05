@@ -1,32 +1,36 @@
+use v6.c;
+
+unit module Scheme:ver<0.0.1>:auth<cpan:ufobat>;
+
 use Scheme::AST;
 use Scheme::Grammar;
 use Scheme::Action;
 use Scheme::Environment;
-
-unit module Scheme;
-
+use Scheme::Compiler;
 
 sub parse(Str $program) is export {
     my %*Macro;
     my $match = Scheme::Grammar.parse($program, actions => Scheme::Action);
-    die unless $match;
-    return $match
+    die 'compile error' unless $match;
+    return $match.ast;
 }
 
 sub environment() is export {
     return Scheme::Environment.get-global-environment();
 }
 
-multi sub evaluate($ast, :$env = environment() ) is export {
-    execute $ast, $env;
-}
-multi sub evaluate(Match $m, :$env = environment() ) is export {
-    evaluate $m.made, :$env;
+sub compileX($list) is export {
+    return Scheme::Compiler::to-ast($list);
 }
 
-proto execute($ast, $env) {
+proto execute($ast, $env) is export {
     # say $ast.perl;
     {*}
+}
+
+sub evaluate ($list, $env = environment()) is export {
+    my $ast = compileX $list;
+    execute $ast, $env;
 }
 
 multi sub execute(Scheme::AST::Expressions $ast, $env) {
@@ -86,3 +90,33 @@ multi sub execute($any where { not .does: Scheme::AST }, $env) {
 multi sub execute($any where { .does: Scheme::AST }, $env) {
     die "execution of { $any.^name } not yet implemented";
 }
+
+=begin pod
+
+=head1 NAME
+
+Scheme - blah blah blah
+
+=head1 SYNOPSIS
+
+=begin code :lang<perl6>
+
+use Scheme;
+
+=end code
+
+=head1 DESCRIPTION
+
+Scheme is ...
+
+=head1 AUTHOR
+
+Martin Barth <martin@senfdax.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2019 Martin Barth
+
+This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
+
+=end pod
