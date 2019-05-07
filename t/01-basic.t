@@ -6,9 +6,11 @@ use Scheme;
 my ($scheme-code, $ast);
 
 sub test-parse($code) {
-    my $ast;
-    lives-ok { $ast = parse $scheme-code }, 'parsed';
-    ok $ast, 'scheme understood';
+    my ($ast, $list, %context);
+    lives-ok { ($list, %context) = parse $scheme-code }, 'parsed';
+    ok $list, 'scheme understood';
+    ok %context.elems > 0, 'with context';
+    lives-ok { $ast = compileX $list, :%context }, 'compiled';
     return $ast;
 }
 

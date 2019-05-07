@@ -2,8 +2,11 @@ unit module Scheme::Compiler;
 
 use Scheme::AST;
 use Scheme::Grammar;
+use Scheme::Context;
 
-our proto to-ast($any) {*}
+our proto to-ast($any, :%context)  {
+    {*}
+}
 
 #### the order of the subs are important
 
@@ -14,11 +17,13 @@ subset Conditional of Positional where {
     $_.elems == 4 and
     $_[0] eq 'if'
 }
-multi sub to-ast(Conditional $any) {
+multi sub to-ast(Conditional $any, :%context) {
+    # say "Conditional";
     Scheme::AST::Conditional.new:
-        expression => to-ast($any[1]),
-        conseq     => to-ast($any[2]),
-        alt        => to-ast($any[3]);
+        context    => %context{ $any.WHERE },
+        expression => to-ast($any[1], :%context),
+        conseq     => to-ast($any[2], :%context),
+        alt        => to-ast($any[3], :%context);
 }
 
 # rule definition:sym<simple> {
@@ -29,10 +34,12 @@ subset DefinitionSimple of Positional where {
     $_[0] eq 'define' and
     Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_[1])
 }
-multi sub to-ast(DefinitionSimple $any) {
+multi sub to-ast(DefinitionSimple $any, :%context) {
+    # say "DefinitionSimple";
     Scheme::AST::Definition.new:
+        context    => %context{ $any.WHERE },
         identifier => ~ $any[1],
-        expression => to-ast($any[2]),
+        expression => to-ast($any[2], :%context),
 }
 
 # rule definition:sym<lambda> {
@@ -47,12 +54,16 @@ subset DefinitionLambda of Positional where {
         Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
     }, $_[1].values
 }
-multi sub to-ast(DefinitionLambda $any) {
+multi sub to-ast(DefinitionLambda $any, :%context) {
+    # say "DefinitionLambda", $any.WHAT;
+    my $context = %context{ $any.WHERE };
     Scheme::AST::Definition.new(
-        identifier =>  ~ $any[1][0],
+        :$context,
+        identifier => ~ $any[1][0],
         expression => Scheme::AST::Lambda.new(
+            :$context,
             params => | $any[1][1..*].map( ~* ),
-            expressions => to-ast($any[2])
+            expressions => to-ast($any[2], :%context)
         )
     );
 }
@@ -66,11 +77,13 @@ subset Lambda of Positional where {
         Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
     }, $_[1].values
 }
-multi sub to-ast(Lambda $any) {
+multi sub to-ast(Lambda $any, :%context) {
     # TODO TODO TODO TODO TODO TODO TODO TODO
+    #say "Lambda";
     Scheme::AST::Lambda.new:
-        params => | $any[1].map( ~* ),
-        expressions => to-ast($any[2])
+        context     => %context{ $any.WHERE },
+        params      => | $any[1].map( ~* ),
+        expressions => to-ast($any[2], :%context)
 }
 
 # TODO TODO TODO TODO TODO TODO TODO TODO
@@ -96,8 +109,11 @@ subset Quote of Positional where {
     $_.elems == 2 and
     $_[0] eq 'quote'
 }
-multi sub to-ast(Quote $any) {
-    Scheme::AST::Quote.new: datum => $any[1];
+multi sub to-ast(Quote $any, :%context) {
+    #say "Quote";
+    Scheme::AST::Quote.new:
+        datum   => $any[1],
+        context => %context{ $any.WHERE },
 }
 
 # TODO TODO TODO TODO TODO TODO TODO TODO
@@ -116,17 +132,21 @@ subset ProcOrMacroOrBuildinCall of Positional where {
         :rule('atom:sym<identifier>'), $_[0]
     );
 }
-multi sub to-ast(ProcOrMacroOrBuildinCall $any) {
+multi sub to-ast(ProcOrMacroOrBuildinCall $any, :%context) {
+    #say "ProcOrMacroOrBuildinCall";
     my $identifier = $any.shift;
     Scheme::AST::ProcCall.new:
         :$identifier,
-        expressions => map { to-ast $_ }, $any.values
+        context     => %context{ $any.WHERE },
+        expressions => | map { to-ast $_, :%context }, $any.values;
 }
 
 subset SequenceOfExpressions of Positional;
-multi sub to-ast(SequenceOfExpressions $any) {
+multi sub to-ast(SequenceOfExpressions $any, :%context) {
+    # say "SequenceOfExpressions";
     Scheme::AST::Expressions.new:
-        expressions => map { to-ast $_ }, $any.values ;
+        context     => %context{ $any.WHERE },
+        expressions => | map { to-ast $_, :%context }, $any.values ;
 }
 
 ## ATOMS
@@ -143,10 +163,14 @@ subset String of Str where {
     );
 }
 
-multi sub to-ast(Identifier $any) {
-    Scheme::AST::Variable.new: identifier => $any;
+multi sub to-ast(Identifier $any, :%context) {
+    # say "Identifier";
+    Scheme::AST::Variable.new:
+        context    => %context{ $any.WHERE },
+        identifier => $any;
 }
 
-multi sub to-ast($any) {
+multi sub to-ast($any, :%context) {
+    # say "default", $any.WHAT;
     $any;
 }

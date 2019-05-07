@@ -6,7 +6,7 @@ use Scheme;
 
 multi sub MAIN(Str $file, Bool :$parse-only = False, Bool :$compile-only = False) {
     my $program = $file.IO.slurp;
-    run-code($program, $parse-only);
+    run-code($program, $parse-only, $compile-only);
 }
 
 #`(REPL)
@@ -15,8 +15,8 @@ multi sub MAIN() {
     loop {
         my $program = prompt ">>> ";
         try {
-            my $list = parse $program;
-            my $ast = compileX $list;
+            my ($list, %context) = parse $program;
+            my $ast = compileX $list, :%context;
             execute $ast, $env;
             CATCH { default { .note } }
         }
@@ -28,13 +28,14 @@ multi sub MAIN(Str:D :$e!, Bool :$parse-only = False, Bool :$compile-only = Fals
 }
 
 sub run-code($program, $parse-only, $compile-only) {
-    my $list = parse($program);
+    my ($list, %context) = parse($program);
     if $parse-only {
-        say $list.dump-tree;
+        say $list.perl;
+        say %context.perl;
         return;
     }
 
-    my $ast = compileX $list;
+    my $ast = compileX $list, :%context;
     if $compile-only {
         if (try require Data::Dump) === Nil {
             say $ast.perl;

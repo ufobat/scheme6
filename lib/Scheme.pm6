@@ -9,27 +9,25 @@ use Scheme::Environment;
 use Scheme::Compiler;
 
 sub parse(Str $program) is export {
-    my %*Macro;
-    my $match = Scheme::Grammar.parse($program, actions => Scheme::Action);
+    my $actions = Scheme::Action.new;
+    my $match   = Scheme::Grammar.parse($program, :$actions);
     die 'compile error' unless $match;
-    return $match.ast;
+    return ($match.ast, $actions.context);
 }
 
 sub environment() is export {
     return Scheme::Environment.get-global-environment();
 }
 
-sub compileX($list) is export {
-    return Scheme::Compiler::to-ast($list);
+sub compileX($list, :%context) is export {
+    return Scheme::Compiler::to-ast($list, :%context);
 }
 
 proto execute($ast, $env) is export {
-    # say $ast.perl;
     {*}
 }
 
-sub evaluate ($list, $env = environment()) is export {
-    my $ast = compileX $list;
+sub evaluate ($ast, $env = environment()) is export {
     execute $ast, $env;
 }
 

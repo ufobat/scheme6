@@ -1,3 +1,4 @@
+
 class Scheme::Context {
     has Int $.line;
     has Int $.column;
@@ -5,10 +6,14 @@ class Scheme::Context {
     has Bool $.is-file = False;
 }
 
-role Scheme::Contextual[$context] {
+role Scheme::Contextual[$orig, $context] {
 
     method context() {
         return $context;
+    }
+
+    method orig() {
+        return $orig;
     }
 
     method dump-tree($level = 0) {
@@ -32,4 +37,3 @@ role Scheme::Contextual[$context] {
     }
 
 }
-

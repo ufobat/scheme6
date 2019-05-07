@@ -1,4 +1,6 @@
-role Scheme::AST { }
+role Scheme::AST {
+    has $.context is required;
+}
 class Scheme::AST::Expressions does Scheme::AST {
     has @.expressions is required;
 

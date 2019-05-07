@@ -2,6 +2,7 @@ use Scheme::AST;
 use Scheme::Context;
 
 class Scheme::Action {
+    has %.context;
 
     sub get-context($/, :$is-file = False) {
         my $length = $/.Str.chars;
@@ -15,14 +16,29 @@ class Scheme::Action {
     }
 
     method TOP($/) {
-        make [  $<expression>>>.made ] but Scheme::Contextual[ get-context($/, :is-file) ];
+        my $data    = [ $<expression>>>.made ];
+        my $context = get-context $/, :is-file;
+        %!context{ $data.WHERE } = $context;
+        make $data;
+        # make $data but Scheme::Contextual[$data, $context];
+        # make Scheme::DataWithContext.new(:$data, :$context);
     }
 
     multi method expression:sym<atom> ($/) {
-        make $<atom>.made but Scheme::Contextual[ get-context($/) ];
+        my $data    = $<atom>.made;
+        my $context = get-context $/;
+        %!context{ $data.WHERE } = $context;
+        make $data;
+        # make $data but Scheme::Contextual[$data, $context];
+        # make Scheme::DataWithContext.new(:$data, :$context);
     }
     multi method expression:sym<list>($/)  {
-        make [ $<expression>>>.made ] but Scheme::Contextual[ get-context($/) ];
+        my $data    = [ $<expression>>>.made ];
+        my $context = get-context $/;
+        %!context{ $data.WHERE } = $context;
+        make $data;
+        # make $data but Scheme::Contextual[$data, $context];
+        # make Scheme::DataWithContext.new(:$data, :$context);
     }
 
     multi method atom:sym<identifier>($/)  { make ~ $/ }
