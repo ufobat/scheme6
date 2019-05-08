@@ -11,9 +11,9 @@ grammar Scheme::Grammar does Grammar::ErrorReporting {
 
     regex ws {
         <!ww> [
-            | \s*
+            | \s
             | <comment>
-        ]
+        ]*
     }
 
     regex comment { ';' \N* }
