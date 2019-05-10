@@ -78,8 +78,6 @@ subset Lambda of Positional where {
     }, $_[1].values
 }
 multi sub to-ast(Lambda $any, :%context) {
-    # TODO TODO TODO TODO TODO TODO TODO TODO
-    #say "Lambda";
     Scheme::AST::Lambda.new:
         context     => %context{ $any.WHERE },
         params      => | $any[1].map( ~* ),
@@ -90,9 +88,6 @@ multi sub to-ast(Lambda $any, :%context) {
 # rule define-syntax {
 #     'define-syntax' <keyword=identifier> <transformer-spec>+
 # }
-# TODO TODO TODO TODO TODO TODO TODO TODO
-
-# TODO TODO TODO TODO TODO TODO TODO TODO
 # rule transformer-spec {
 #     '('
 #       'syntax-rules'
@@ -101,6 +96,53 @@ multi sub to-ast(Lambda $any, :%context) {
 #     ')'
 # }
 # TODO TODO TODO TODO TODO TODO TODO TODO
+subset TransformerSpec of Positional where {
+    $_.elems == 3
+    and $_[0] eq 'syntax-rules'
+    and $_[1] ~~ Positional
+    and $_[2] ~~ Positional
+    # identifier
+    and $_[1].values.grep({ Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_) })
+    and $_[2].elems == 2
+    # src-s-expression / list
+    and $_[2][1]
+    # dst-s-expression / list-expression
+    and $_[2][1]
+}
+subset DefineSyntax of Positional where {
+    $_.elems >= 3 and
+    $_[0] eq 'define-syntax' and
+    Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_[1] )
+    #and $_[2] ~~ TransformerSpec
+}
+multi sub to-ast(DefineSyntax $any, :%context) {
+    my $ast = Scheme::AST::Macro.new:
+        context => %context{ $any.WHERE },
+        name => ~ $any[1],
+        transformer-spec => to-transformer-spec($any[2], :%context);
+
+
+    # my $name = $ast.name;
+    # die "can not redefine macro '$name'" if %*Macro{$name}:exists;
+    # %*Macro{$name} = $ast;
+    use Data::Dump;
+    say Dump($ast, :skip-methods);
+    return $ast
+}
+sub to-transformer-spec(TransformerSpec $any, :%context) {
+    # use Data::Dump;
+    # say 'identifier: ', Dump($any[1], :skip-methods);
+    # say 'src-s:      ', Dump($any[2][0], :skip-methods);
+    # say 'dst-s:      ', Dump($any[2][1], :skip-methods);
+    # exit;
+
+    Scheme::AST::TransformerSpec.new:
+        context     => %context{ $any.WHERE },
+        literals    => | $any[1],
+        source      => | $any[2][0],
+        destination => to-ast($any[2][1], :%context),
+}
+
 
 # rule quote {
 #     'quote' <datum>
