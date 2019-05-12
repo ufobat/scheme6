@@ -81,11 +81,11 @@ class Scheme::AST::Quote does Scheme::AST {
 }
 
 class Scheme::AST::Macro does Scheme::AST {
-    has $.name is required;
+    has $.identifier is required;
     has @.transformer-spec is required;
     method clone {
         $?CLASS.new:
-        name => $!name.clone,
+        identifier => $!identifier.clone,
         transformer-spec => @!transformer-spec>>.clone;
     }
 }

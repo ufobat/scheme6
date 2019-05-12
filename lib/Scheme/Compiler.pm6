@@ -119,7 +119,7 @@ subset DefineSyntax of Positional where {
 multi sub to-ast(DefineSyntax $any, :%context) {
     my $ast = Scheme::AST::Macro.new:
         context => %context{ $any.WHERE },
-        name => ~ $any[1],
+        identifier => ~ $any[1],
         transformer-spec => to-transformer-spec($any[2], :%context);
 
 
