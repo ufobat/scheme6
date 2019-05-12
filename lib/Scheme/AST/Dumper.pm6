@@ -7,10 +7,12 @@ use Data::Dump::Tree;
 use Data::Dump::Tree::Enums;
 
 role AstDumper {
-    multi method get_header(Scheme::AST::Variable $ast) {
+    multi method get_header(Scheme::AST $ast where {$_.^can('identifier')}) {
         return $ast.identifier, '.' ~ $ast.^name;
     }
-    multi method get_elements(Scheme::AST::Variable $ast) { }
+    multi method get_elements(Scheme::AST $ast) {
+        return callsame.grep: { $_[0] ne '$.identifier' };
+    }
 }
 
 our sub dump-ast($ast, :$skip-context) is export {
@@ -18,7 +20,7 @@ our sub dump-ast($ast, :$skip-context) is export {
         :display_address(DDT_DISPLAY_NONE)
     ) does AstDumper;
 
-    my @header_filters = ();
+    my @header_filters   = ();
 
     if $skip-context {
         # needs to be multi
@@ -30,19 +32,6 @@ our sub dump-ast($ast, :$skip-context) is export {
             r = Data::Dump::Tree::Type::Nothing;
         };
         push @header_filters, &skip-context;
-    }
-
-    # TODO
-    # 1) If $s has a attribute named 'identifier'
-    #    move the identifier to the header
-    #    like done in the AstDumper role (which would be obsolte)
-    # 2) in the element_filter i need to skip the 'identifier' attribute
-    multi sub identifier-to-header (
-        $dumper, \r, Scheme::AST $s,
-        ($depth, $path, $glyph, @renderings),
-        (\k, \b, \v, \f, \final, \want_address)
-    ) {
-        # TODO
     }
 
     $ddt.ddt( $ast, :@header_filters );
