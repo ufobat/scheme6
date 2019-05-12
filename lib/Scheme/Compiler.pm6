@@ -1,6 +1,7 @@
 unit module Scheme::Compiler;
 
 use Scheme::AST;
+use Scheme::AST::Dumper;
 use Scheme::Grammar;
 use Scheme::Context;
 
@@ -125,8 +126,7 @@ multi sub to-ast(DefineSyntax $any, :%context) {
     # my $name = $ast.name;
     # die "can not redefine macro '$name'" if %*Macro{$name}:exists;
     # %*Macro{$name} = $ast;
-    use Data::Dump;
-    say Dump($ast, :skip-methods);
+    dump-ast($ast, :skip-context);
     return $ast
 }
 sub to-transformer-spec(TransformerSpec $any, :%context) {
