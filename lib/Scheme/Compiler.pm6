@@ -8,21 +8,15 @@ use Scheme::Context;
 has %.macros;
 
 subset Identifier of Str where {
-    Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_ );
+    Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_ )
 }
-
+subset BuildIn of Str where {
+    Scheme::Grammar.parse( :rule('atom:sym<build-in>'), $_ )
+}
 subset String of Str where {
-    Scheme::Grammar.parse( :rule('atom:sym<string>'), $_);
+    Scheme::Grammar.parse( :rule('atom:sym<string>'), $_)
 }
 
-# our proto to-ast($any, :%context)  {
-#     {*}
-# }
-
-# multi method to-ast($_ where Positional, :%context) {
-#     my $current_context = %context{ $_.WHERE };
-#     self.list-to-ast(|$_.values, :%context, :$current_context);
-# }
 subset IdentifierList of Positional where {
     $_.values.grep({ $_ ~~ Identifier}) == $_.elems
 }
@@ -219,13 +213,8 @@ multi method to-ast(LambdaCall $any, :%context) {
 #     [ <identifier> | <identifier=build-in> ] <expression>*
 # }
 subset ProcOrMacroOrBuildinCall of Positional where {
-    Scheme::Grammar.parse(
-        :rule('atom:sym<build-in>'), $_[0]
-    )
-    or
-    Scheme::Grammar.parse(
-        :rule('atom:sym<identifier>'), $_[0]
-    );
+    $_[0] ~~ BuildIn or
+    $_[0] ~~ Identifier
 }
 multi method to-ast(ProcOrMacroOrBuildinCall $any, :%context) {
     #say "ProcOrMacroOrBuildinCall";
@@ -243,6 +232,10 @@ method !to-macro-ast($any) {
 
 }
 
+# multi method to-ast($_ where Positional, :%context) {
+#     my $current_context = %context{ $_.WHERE };
+#     self.list-to-ast(|$_.values, :%context, :$current_context);
+# }
 subset SequenceOfExpressions of Positional;
 multi method to-ast(SequenceOfExpressions $any, :%context) {
     # say "SequenceOfExpressions";
