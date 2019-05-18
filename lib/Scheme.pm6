@@ -3,6 +3,7 @@ use v6.c;
 unit module Scheme:ver<0.0.1>:auth<cpan:ufobat>;
 
 use Scheme::AST;
+use Scheme::AST::Dumper;
 use Scheme::Grammar;
 use Scheme::Action;
 use Scheme::Environment;

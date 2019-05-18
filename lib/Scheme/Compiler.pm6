@@ -7,6 +7,14 @@ use Scheme::Context;
 
 has %.macros;
 
+subset Identifier of Str where {
+    Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_ );
+}
+
+subset String of Str where {
+    Scheme::Grammar.parse( :rule('atom:sym<string>'), $_);
+}
+
 # our proto to-ast($any, :%context)  {
 #     {*}
 # }
@@ -15,9 +23,9 @@ has %.macros;
 #     my $current_context = %context{ $_.WHERE };
 #     self.list-to-ast(|$_.values, :%context, :$current_context);
 # }
-# subset IdentifierList of Positional where {
-#     $_.values.grep({ $_ ~~ Identifier}) == $_.elems
-# }
+subset IdentifierList of Positional where {
+    $_.values.grep({ $_ ~~ Identifier}) == $_.elems
+}
 
 #### the order of the subs are important
 
@@ -50,10 +58,12 @@ multi method to-ast(Conditional $any, :%context) {
 subset DefinitionSimple of Positional where {
     $_.elems == 3 and
     $_[0] eq 'define' and
-    Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_[1])
+    $_[1] ~~ Identifier
 }
 multi method to-ast(DefinitionSimple $any, :%context) {
     # say "DefinitionSimple";
+    # say $any.perl;
+    #say $any[1] ~~ Str;
     Scheme::AST::Definition.new:
         context    => %context{ $any.WHERE },
         identifier => ~ $any[1],
@@ -74,11 +84,8 @@ multi method to-ast(DefinitionSimple $any, :%context) {
 subset DefinitionLambda of Positional where {
     $_.elems >= 3 and
     $_[0] eq 'define' and
-    $_[1] ~~ Positional and
-    $_[1].elems >= 1 and
-    grep {
-        Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
-    }, $_[1].values
+    $_[1] ~~ IdentifierList and
+    $_[1].elems >= 1
 }
 multi method to-ast(DefinitionLambda $any, :%context) {
     # say "DefinitionLambda", $any.WHAT;
@@ -197,6 +204,16 @@ multi method to-ast(Quote $any, :%context) {
 # TODO TODO TODO TODO TODO TODO TODO TODO
 # rule proc-or-macro-call:sym<lambda> { '(' <lambda> ')' <expression>* }
 # TODO TODO TODO TODO TODO TODO TODO TODO
+subset LambdaCall of Positional where {
+    $_.elems == 2 and
+    $_[0] ~~ Lambda
+}
+multi method to-ast(LambdaCall $any, :%context) {
+    Scheme::AST::ProcCall.new:
+    context => %context{ $any.WHERE },
+    lambda => self.to-ast($any[0]),
+    expressions => self.to-ast($any[1]),
+}
 
 # rule proc-or-macro-call:sym<simple> {
 #     [ <identifier> | <identifier=build-in> ] <expression>*
@@ -235,18 +252,6 @@ multi method to-ast(SequenceOfExpressions $any, :%context) {
 }
 
 ## ATOMS
-
-subset Identifier of Str where {
-    Scheme::Grammar.parse(
-        :rule('atom:sym<identifier>'), $_
-    );
-}
-
-subset String of Str where {
-    Scheme::Grammar.parse(
-        :rule('atom:sym<string>'), $_
-    );
-}
 
 multi method to-ast(Identifier $any, :%context) {
     # say "Identifier";

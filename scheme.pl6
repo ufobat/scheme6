@@ -3,6 +3,7 @@
 use v6;
 
 use Scheme;
+use Scheme::AST::Dumper;
 
 multi sub MAIN(Str $file, Bool :$parse-only = False, Bool :$compile-only = False) {
     my $program = $file.IO.slurp;
@@ -37,12 +38,7 @@ sub run-code($program, $parse-only, $compile-only) {
 
     my $ast = compileX $list, :%context;
     if $compile-only {
-        if (try require Data::Dump) === Nil {
-            say $ast.perl;
-        } else {
-            my &Dump = ::('Data::Dump::EXPORT::DEFAULT::&Dump');
-            say Dump( $ast, :indent(2), :skip-methods );
-        }
+        dump-ast($ast, :skip-context);
         return;
     }
 
