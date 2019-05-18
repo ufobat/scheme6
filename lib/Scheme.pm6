@@ -20,7 +20,8 @@ sub environment() is export {
 }
 
 sub compileX($list, :%context) is export {
-    return Scheme::Compiler::to-ast($list, :%context);
+    my $compiler = Scheme::Compiler.new;
+    return $compiler.to-ast($list, :%context);
 }
 
 proto execute($ast, $env) is export {

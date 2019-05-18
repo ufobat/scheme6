@@ -131,7 +131,7 @@ subtest {
     $scheme-code = Q{((lambda (x) x) 13)};
     $ast = test-parse($scheme-code);
     is evaluate($ast), 13, 'execution of lambda';
-}
+};
 
 subtest {
     $scheme-code = Q{
