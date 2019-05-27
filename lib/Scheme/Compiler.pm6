@@ -104,7 +104,7 @@ multi method to-ast(DefineSyntax $any, :%context) {
         identifier => $identifier,
         transformer-spec => self!to-transformer-spec($any[2], :%context);
 
-    dump-ast($ast, :skip-context);
+    # dump-ast($ast, :skip-context);
     die "can not redefine macro '$identifier'" if %.macros{ $identifier }:exists;
     $.macros{ $identifier } = $ast;
 
@@ -157,7 +157,7 @@ multi method to-ast(LambdaCall $any, :%context) {
 # }
 multi method list-to-ast($identifier where Identifier|BuildIn, *@param, :%context, :$current_context) {
     return %.macros{ $identifier }:exists
-        ?? self!to-macro-ast(@param)
+        ?? self!macro-to-ast(%.macros{ $identifier }, @param, %context)
         !! Scheme::AST::ProcCall.new(
             identifier  => $identifier,
             context     => $current_context,
@@ -165,8 +165,64 @@ multi method list-to-ast($identifier where Identifier|BuildIn, *@param, :%contex
         );
 }
 
-method !to-macro-ast(@param) {
+method !macro-to-ast($macro-ast, @param, %context) {
+    # (define x -1)
+    # (define y  1)
+    # (define e  0)
+    # (define-syntax three-state-macro                                 ;;; $identifier eq 'three-state-macro'
+    #   (syntax-rules (ignore e)                                       ;;; $transformer-spec.literals
+    #     (
+    #      (_ x ignore e pos-body eq-body neg-body)                    ;;; $transformer-spec.source
+    #      (if (> x 0) pos-body (if (= x 0) eq-body neg-body ))        ;;; $transformer-spec.destination
+    #     )
+    #   )
+    # )
+    # (three-state-macro x ignore e (display "P") (display "N") (display "Z"))  ;;; @expressions
 
+    sub macro-matches(@expressions, @literals, @source) {
+        my %replaceables; # name => $ast
+
+        my $underscore = @source.shift;
+        unless $underscore eq '_' {
+            note "transformer-spec is confusing: expected '_' but got '$underscore'";
+            return;
+        }
+        # say join "\n", "<expressions>", @expressions.map(*.perl), "<expressions>\n";
+        unless @expressions.elems == @source.elems {
+            note "number of elements missmatch";
+            return;
+        }
+
+        sub syntax-ignore(Str $src-keyword --> Bool) { so @literals.first: $src-keyword }
+
+        # say "           SOURCE -> EXPRESSION";
+        for @expressions Z @source -> ($e, $s) {
+            unless syntax-ignore $s {
+                %replaceables{ $s } = $e;
+            }
+            # say "looop: ", $s.fmt('%10s'), " -> ", $e;
+        }
+
+        # say %replaceables;
+        return %replaceables;
+    }
+
+    # dump-ast(@param, :skip-context);
+    my @expressions = @param.map({ self.to-ast( $_, :%context ) });
+    for $macro-ast.transformer-spec -> $transformer-spec {
+
+        use Scheme::AST::Dumper;
+        # dump-ast(@expressions, :skip-context);
+        # dump-ast($transformer-spec, :skip-context);
+        my @source   = $transformer-spec.source;
+        my @literals = $transformer-spec.literals;
+
+        if my %replacements = macro-matches(@expressions, @literals, @source) {
+            my $clone = clone-ast($transformer-spec.destination, %replacements);
+            return $clone;
+        }
+        die 'macro call was invalid'
+    }
 }
 
 # Must be the last to-ast
@@ -200,3 +256,22 @@ multi method to-ast($any, :%context) {
     # say "default", $any.WHAT;
     $any;
 }
+
+sub clone-ast($ast, %replacements) {
+    my $clone = $ast.clone;
+    if $clone ~~ Scheme::AST {
+        for $clone.^attributes(:local) -> $attr {
+            my $value = $attr.get_value($clone);
+            if $value ~~ Scheme::AST {
+                my $cv =  $value ~~ Scheme::AST::Variable
+                ?? %replacements{ $value.identifier }
+                !! clone-ast($value, %replacements);
+                $attr.set_value($clone, $cv);
+            }
+        }
+    }
+
+    return $clone;
+}
+
+
