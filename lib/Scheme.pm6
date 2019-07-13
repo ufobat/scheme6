@@ -52,7 +52,7 @@ multi sub execute(Scheme::AST::Definition $ast, $env) {
     my $val = execute($ast.expression, $env);
     $env.set: $ast.identifier => $val;
 }
-multi sub execute(Scheme::AST::Variable $ast, $env) {
+multi sub execute(Scheme::AST::Symbol $ast, $env) {
     my $var = $env.lookup($ast.identifier);
     if $var ~~ Positional {
         return eager flat $var;

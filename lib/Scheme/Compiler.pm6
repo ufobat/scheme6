@@ -248,7 +248,7 @@ multi method to-ast(SequenceOfExpressions $any, :%context) {
 
 multi method to-ast(Identifier $any, :%context) {
     # say "Identifier";
-    Scheme::AST::Variable.new:
+    Scheme::AST::Symbol.new:
         context    => %context{ $any.WHERE },
         identifier => $any;
 }
@@ -268,13 +268,13 @@ sub clone-ast($ast, %replacements) {
                 $cv = Array.new;
                 for @$value {
                     $cv.append(
-                        $_ ~~ Scheme::AST::Variable
+                        $_ ~~ Scheme::AST::Symbol
                         ?? %replacements{ $_.identifier }
                         !! clone-ast($_, %replacements)
                     );
                 }
             } else {
-                $cv = $value ~~ Scheme::AST::Variable
+                $cv = $value ~~ Scheme::AST::Symbol
                 ?? %replacements{ $value.identifier }
                 !! clone-ast($value, %replacements);
             }

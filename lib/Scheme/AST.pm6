@@ -26,7 +26,7 @@ class Scheme::AST::Definition does Scheme::AST {
     has $.expression is required;
 }
 
-class Scheme::AST::Variable does Scheme::AST {
+class Scheme::AST::Symbol does Scheme::AST {
     has $.identifier is required;
 }
 
