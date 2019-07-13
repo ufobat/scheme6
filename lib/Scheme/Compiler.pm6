@@ -58,12 +58,53 @@ multi method list-to-ast('define', IdentifierList $identifier, $expression, :%co
     );
 }
 
+# rule quote { 'quote' <datum> }
+multi method list-to-ast('quote', $datum, :%context, :$current_context) {
+    Scheme::AST::Quote.new:
+        datum   => $datum,
+        context => $current_context,
+}
+
+# rule proc-or-macro-call:sym<simple> {
+#     [ <identifier> | <identifier=build-in> ] <expression>*
+# }
+multi method list-to-ast($identifier where Identifier|BuildIn, *@param, :%context, :$current_context) {
+    return %.macros{ $identifier }:exists
+        ?? self!macro-to-ast(%.macros{ $identifier }, @param, %context)
+        !! Scheme::AST::ProcCall.new(
+            identifier  => $identifier,
+            context     => $current_context,
+            expressions => | @param.map({ self.to-ast( $_, :%context ) })
+        );
+}
+
 # rule lambda { 'lambda' '(' <identifier>* ')' <expression>+ }
 multi method list-to-ast('lambda', IdentifierList $params, $expressions, :%context, :$current_context) {
     Scheme::AST::Lambda.new:
         context     => $current_context,
         params      => $params.values,
         expressions => self.to-ast($expressions, :%context)
+}
+
+# rule proc-or-macro-call:sym<lambda> { '(' <lambda> ')' <expression>* }
+subset Lambda of Positional where {
+    $_.elems >= 3 and
+    $_[0] eq 'lambda' and
+    $_[1] ~~ Positional and
+    grep {
+        Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
+    }, $_[1].values
+}
+subset LambdaCall of Positional where {
+    $_.elems == 2 and
+    $_[0] ~~ Lambda
+}
+# !!! multi method to ast must be in a specific order
+multi method to-ast(LambdaCall $any, :%context) {
+    Scheme::AST::ProcCall.new:
+    context => %context{ $any.WHERE },
+    lambda => self.to-ast($any[0]),
+    expressions => self.to-ast($any[1]),
 }
 
 # TODO TODO TODO TODO TODO TODO TODO TODO
@@ -97,6 +138,7 @@ subset DefineSyntax of Positional where {
     $_[1] ~~ Identifier
     #and $_[2] ~~ TransformerSpec
 }
+# !!! multi method to ast must be in a specific order
 multi method to-ast(DefineSyntax $any, :%context) {
     my $identifier = ~ $any[1],
     my $ast = Scheme::AST::Macro.new:
@@ -122,47 +164,6 @@ method !to-transformer-spec(TransformerSpec $any, :%context) {
         literals    => | $any[1],
         source      => | $any[2][0],
         destination => self.to-ast($any[2][1], :%context),
-}
-
-
-# rule quote { 'quote' <datum> }
-multi method list-to-ast('quote', $datum, :%context, :$current_context) {
-    Scheme::AST::Quote.new:
-        datum   => $datum,
-        context => $current_context,
-}
-
-# rule proc-or-macro-call:sym<lambda> { '(' <lambda> ')' <expression>* }
-subset Lambda of Positional where {
-    $_.elems >= 3 and
-    $_[0] eq 'lambda' and
-    $_[1] ~~ Positional and
-    grep {
-        Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
-    }, $_[1].values
-}
-subset LambdaCall of Positional where {
-    $_.elems == 2 and
-    $_[0] ~~ Lambda
-}
-multi method to-ast(LambdaCall $any, :%context) {
-    Scheme::AST::ProcCall.new:
-    context => %context{ $any.WHERE },
-    lambda => self.to-ast($any[0]),
-    expressions => self.to-ast($any[1]),
-}
-
-# rule proc-or-macro-call:sym<simple> {
-#     [ <identifier> | <identifier=build-in> ] <expression>*
-# }
-multi method list-to-ast($identifier where Identifier|BuildIn, *@param, :%context, :$current_context) {
-    return %.macros{ $identifier }:exists
-        ?? self!macro-to-ast(%.macros{ $identifier }, @param, %context)
-        !! Scheme::AST::ProcCall.new(
-            identifier  => $identifier,
-            context     => $current_context,
-            expressions => | @param.map({ self.to-ast( $_, :%context ) })
-        );
 }
 
 method !macro-to-ast($macro-ast, @param, %context) {
@@ -226,7 +227,7 @@ method !macro-to-ast($macro-ast, @param, %context) {
     }
 }
 
-# Must be the last to-ast
+# !!! multi method to ast must be in a specific order
 multi method to-ast(Positional $any
                     where {
                            self.^lookup('list-to-ast').cando( \(self, |$any.values, :context(Hash.new), :current_context ))
@@ -237,6 +238,7 @@ multi method to-ast(Positional $any
 
 
 subset SequenceOfExpressions of Positional;
+# !!! multi method to ast must be in a specific order
 multi method to-ast(SequenceOfExpressions $any, :%context) {
     # say "SequenceOfExpressions";
     Scheme::AST::Expressions.new:
@@ -245,7 +247,7 @@ multi method to-ast(SequenceOfExpressions $any, :%context) {
 }
 
 ## ATOMS
-
+# !!! multi method to ast must be in a specific order
 multi method to-ast(Identifier $any, :%context) {
     # say "Identifier";
     Scheme::AST::Symbol.new:
@@ -253,6 +255,7 @@ multi method to-ast(Identifier $any, :%context) {
         identifier => $any;
 }
 
+# !!! multi method to ast must be in a specific order
 multi method to-ast($any, :%context) {
     # say "default", $any.WHAT;
     $any;
