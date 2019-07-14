@@ -7,23 +7,14 @@ use Scheme::Context;
 
 has %.macros;
 
-subset Identifier of Str where {
-    Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_ )
-}
-subset BuildIn of Str where {
-    Scheme::Grammar.parse( :rule('atom:sym<build-in>'), $_ )
-}
-subset String of Str where {
-    Scheme::Grammar.parse( :rule('atom:sym<string>'), $_)
-}
-
-subset IdentifierList of Positional where {
-    $_.values.grep({ $_ ~~ Identifier}) == $_.elems
+subset SymbolList of Positional where {
+    $_.values.grep({ $_ ~~ Scheme::AST::Symbol }) == $_.elems
 }
 
 ## LIST EXPRESSIONS
 # rule conditional { 'if' <test=expression> <conseq=expression> <alt=expression> }
-multi method list-to-ast('if', $expression, $conseq, $alt, :%context, :$current_context) {
+subset IfSymbol of Scheme::AST::Symbol where *.identifier eq 'if';
+multi method list-to-ast(IfSymbol $, $expression, $conseq, $alt, :%context, :$current_context) {
     Scheme::AST::Conditional.new:
         context    => $current_context,
         expression => self.to-ast($expression, :%context),
@@ -35,31 +26,33 @@ multi method list-to-ast('if', $expression, $conseq, $alt, :%context, :$current_
 #     'define' <identifier> <expression>
 # }
 
-multi method list-to-ast('define', Identifier $identifier, $expression, :%context, :$current_context) {
+subset DefineSymbol of Scheme::AST::Symbol where *.identifier eq 'define';
+multi method list-to-ast(DefineSymbol $, Scheme::AST::Symbol $sym, $expression, :%context, :$current_context) {
     # say "DefinitionSimple";
     Scheme::AST::Definition.new:
         context    => $current_context,
-        identifier => $identifier,
+        identifier => $sym.identifier,
         expression => self.to-ast($expression, :%context),
 }
 
 # rule definition:sym<lambda> {
 #     'define' '(' <def-name=identifier> [<lambda-identifier=identifier> ]*  ')' <expression>+
 # }
-multi method list-to-ast('define', IdentifierList $identifier, $expression, :%context, :$current_context) {
+multi method list-to-ast(DefineSymbol $, SymbolList $identifier, $expression, :%context, :$current_context) {
     Scheme::AST::Definition.new(
         context => $current_context,
-        identifier => $identifier.shift,
+        identifier => $identifier.shift.identifier,
         expression => Scheme::AST::Lambda.new(
             context => $current_context,
-            params  => $identifier.values,
+            params  => $identifier.values.map(*.identifier),
             expressions => self.to-ast($expression, :%context)
         )
     );
 }
 
 # rule quote { 'quote' <datum> }
-multi method list-to-ast('quote', $datum, :%context, :$current_context) {
+subset QuoteSymbol of Scheme::AST::Symbol where *.identifier eq 'quote';
+multi method list-to-ast(QuoteSymbol $, $datum, :%context, :$current_context) {
     Scheme::AST::Quote.new:
         datum   => $datum,
         context => $current_context,
@@ -68,32 +61,34 @@ multi method list-to-ast('quote', $datum, :%context, :$current_context) {
 # rule proc-or-macro-call:sym<simple> {
 #     [ <identifier> | <identifier=build-in> ] <expression>*
 # }
-multi method list-to-ast($identifier where Identifier|BuildIn, *@param, :%context, :$current_context) {
-    return %.macros{ $identifier }:exists
-        ?? self!macro-to-ast(%.macros{ $identifier }, @param, %context)
+multi method list-to-ast(Scheme::AST::Symbol $sym, *@param, :%context, :$current_context) {
+    return %.macros{ $sym.identifier }:exists
+        ?? self!macro-to-ast(%.macros{ $sym.identifier }, @param, %context)
         !! Scheme::AST::ProcCall.new(
-            identifier  => $identifier,
+            identifier  => $sym.identifier,
             context     => $current_context,
             expressions => | @param.map({ self.to-ast( $_, :%context ) })
         );
 }
 
 # rule lambda { 'lambda' '(' <identifier>* ')' <expression>+ }
-multi method list-to-ast('lambda', IdentifierList $params, $expressions, :%context, :$current_context) {
+subset LambdaSymbol of Scheme::AST::Symbol where *.identifier eq 'lambda';
+multi method list-to-ast(LambdaSymbol $, SymbolList $params, $expressions, :%context, :$current_context) {
     Scheme::AST::Lambda.new:
         context     => $current_context,
-        params      => $params.values,
+        params      => $params.values.map(*.identifier),
         expressions => self.to-ast($expressions, :%context)
 }
 
 # rule proc-or-macro-call:sym<lambda> { '(' <lambda> ')' <expression>* }
 subset Lambda of Positional where {
     $_.elems >= 3 and
-    $_[0] eq 'lambda' and
+    $_[0] ~~ LambdaSymbol and
     $_[1] ~~ Positional and
-    grep {
-        Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
-    }, $_[1].values
+    $_[1] ~~ SymbolList
+    # grep {
+    #     Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_)
+    # }, $_[1].values
 }
 subset LambdaCall of Positional where {
     $_.elems == 2 and
@@ -119,28 +114,30 @@ multi method to-ast(LambdaCall $any, :%context) {
 #     ')'
 # }
 # TODO TODO TODO TODO TODO TODO TODO TODO
+subset SyntaxRulesSymbol of Scheme::AST::Symbol where *.identifier eq 'syntax-rules';
 subset TransformerSpec of Positional where {
     $_.elems == 3
-    and $_[0] eq 'syntax-rules'
-    and $_[1] ~~ Positional
+    and $_[0] ~~ SyntaxRulesSymbol
+    and $_[1] ~~ SymbolList
     and $_[2] ~~ Positional
     # identifier
-    and $_[1].values.grep({ Scheme::Grammar.parse( :rule('atom:sym<identifier>'), $_) })
     and $_[2].elems == 2
     # src-s-expression / list
-    and $_[2][1]
+    and $_[2][0] ~~ SymbolList
+    # and do { unless ($_[2][1] ~~ SymbolList) { say "list: "; for |$_[2][1] { .WHAT.say; .say } };say "done"}
     # dst-s-expression / list-expression
-    and $_[2][1]
+    # and $_[2][1] ~~ SymbolList
 }
+subset DefineSyntaxSymbol of Scheme::AST::Symbol where *.identifier eq 'define-syntax';
 subset DefineSyntax of Positional where {
-    $_.elems >= 3 and
-    $_[0] eq 'define-syntax' and
-    $_[1] ~~ Identifier
-    #and $_[2] ~~ TransformerSpec
+    $_.elems >= 3
+    and $_[0] ~~ DefineSyntaxSymbol
+    and $_[1] ~~ Scheme::AST::Symbol
+    and $_[2] ~~ TransformerSpec
 }
 # !!! multi method to ast must be in a specific order
 multi method to-ast(DefineSyntax $any, :%context) {
-    my $identifier = ~ $any[1],
+    my $identifier = $any[1].identifier,
     my $ast = Scheme::AST::Macro.new:
         context => %context{ $any.WHERE },
         identifier => $identifier,
@@ -162,7 +159,7 @@ method !to-transformer-spec(TransformerSpec $any, :%context) {
     Scheme::AST::TransformerSpec.new:
         context     => %context{ $any.WHERE },
         literals    => | $any[1],
-        source      => | $any[2][0],
+        source      => | $any[2][0].map(*.identifier),
         destination => self.to-ast($any[2][1], :%context),
 }
 
@@ -248,11 +245,13 @@ multi method to-ast(SequenceOfExpressions $any, :%context) {
 
 ## ATOMS
 # !!! multi method to ast must be in a specific order
-multi method to-ast(Identifier $any, :%context) {
+multi method to-ast(Scheme::AST::Symbol $sym, :%context) {
     # say "Identifier";
-    Scheme::AST::Symbol.new:
-        context    => %context{ $any.WHERE },
-        identifier => $any;
+    # TODO maybe this: $sym.context( %context{ $sym.WHERE } );
+    return $sym;
+    # Scheme::AST::Symbol.new:
+    #     context    => %context{ $any.WHERE },
+    #     identifier => $any;
 }
 
 # !!! multi method to ast must be in a specific order

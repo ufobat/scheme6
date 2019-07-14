@@ -41,8 +41,18 @@ class Scheme::Action {
         # make Scheme::DataWithContext.new(:$data, :$context);
     }
 
-    multi method atom:sym<identifier>($/)  { make ~ $/ }
-    multi method atom:sym<build-in>($/)    { make ~ $/ }
+    multi method atom:sym<identifier>($/) {
+        make Scheme::AST::Symbol.new(
+            identifier => ~ $/,
+            context => get-context $/,
+        )
+    }
+    multi method atom:sym<build-in>($/) {
+        make Scheme::AST::Symbol.new(
+            identifier => ~ $/,
+            context => get-context $/,
+        )
+    }
     multi method atom:sym<number>($/)      { make + $/ }
     multi method atom:sym<boolean>($/)     { make $/ eq '#t' }
     multi method atom:sym<string>($/) {
