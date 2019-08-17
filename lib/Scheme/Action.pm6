@@ -56,7 +56,7 @@ class Scheme::Action {
     multi method atom:sym<number>($/)      { make + $/ }
     multi method atom:sym<boolean>($/)     { make $/ eq '#t' }
     multi method atom:sym<string>($/) {
-        make '"' ~ $/<string-char>.map(*.made).join() ~ '"';
+        make ~ $/<string-char>.map(*.made).join();
     }
     multi method atom:sym<character>($/) {
         make $/ eq '#\\newline' ?? "\n" !! $/ eq '#\\space' ?? ' ' !! $/.substr(2,1);
