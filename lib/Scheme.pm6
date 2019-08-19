@@ -7,6 +7,7 @@ use Scheme::AST::Dumper;
 use Scheme::Grammar;
 use Scheme::Action;
 use Scheme::Environment;
+use Scheme::Executor;
 use Scheme::Compiler;
 
 sub parse(Str $program) is export {
@@ -25,70 +26,13 @@ sub compileX($list, :%context) is export {
     return $compiler.to-ast($list, :%context);
 }
 
-proto execute($ast, $env) is export {
-    {*}
+sub execute($ast, $env) is export {
+    my $executor = Scheme::Executor.new(:$env);
+    $executor.execute($ast);
 }
 
 sub evaluate ($ast, $env = environment()) is export {
     execute $ast, $env;
-}
-
-multi sub execute(Scheme::AST::Expressions $ast, $env) {
-    for $ast.expressions {
-        my $x = execute $_, $env;
-        LAST { return $x }
-    }
-}
-
-multi sub execute(Scheme::AST::ProcCall $ast, $env) {
-    my &proc = $ast.identifier
-    ?? $env.lookup($ast.identifier)
-    !! execute($ast.lambda, $env);
-    proc |$ast.expressions.map: {
-        execute $_, $env;
-    };
-}
-multi sub execute(Scheme::AST::Definition $ast, $env) {
-    my $val = execute($ast.expression, $env);
-    $env.set: $ast.identifier => $val;
-}
-multi sub execute(Scheme::AST::Symbol $ast, $env) {
-    my $var = $env.lookup($ast.identifier);
-    if $var ~~ Positional {
-        return eager flat $var;
-    }
-    return $var;
-}
-multi sub execute(Scheme::AST::Lambda $ast, $env) {
-    sub (*@a) {
-        my $scope = $env.make-new-scope();
-        for |$ast.params -> $name {
-            $scope.set: $name => shift @a
-        }
-
-        for $ast.expressions {
-            my $x = execute $_, $scope;
-            LAST { return $x }
-        }
-    }
-}
-multi sub execute(Scheme::AST::Conditional $ast, $env) {
-    my $val = execute($ast.expression, $env);
-    execute($val ?? $ast.conseq !! $ast.alt, $env);
-}
-multi sub execute(Scheme::AST::Quote $ast, $env) {
-    return $ast.datum;
-}
-multi sub execute(Scheme::AST::Macro $ast, $env) {
-    # macro AST definitions are processed at parsing
-    # they wont be executed
-}
-
-multi sub execute($any where { not .does: Scheme::AST }, $env) {
-    return $any;
-}
-multi sub execute($any where { .does: Scheme::AST }, $env) {
-    die "execution of { $any.^name } not yet implemented";
 }
 
 =begin pod
