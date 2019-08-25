@@ -32,20 +32,19 @@ multi method execute-ast(Scheme::AST::Expressions $ast, $env) {
         self.execute: $first_ast, $env;
         return sub { self.execute: $expressions_ast, $env} but Thunk;
     }
-    for $ast.expressions {
-        my $x = self.execute: $_, $env;
-        LAST { return $x }
-    }
 }
 
-multi method execute-ast(Scheme::AST::ProcCall $ast, $env) {
-    my &proc = $ast.identifier
-    ?? $env.lookup($ast.identifier)
-    !! self.execute($ast.lambda, $env);
-    my $x =  proc |$ast.expressions.map: {
+multi method execute-ast(Scheme::AST::ProcCall $ast where so $ast.identifier, $env) {
+    my &proc = $env.lookup($ast.identifier);
+    proc |$ast.expressions.map: {
         self.execute: $_, $env;
     };
-    return $x;
+}
+multi method execute-ast(Scheme::AST::ProcCall $ast where not so $ast.identifier, $env) {
+    my &proc = self.execute($ast.lambda, $env);
+    proc |$ast.expressions.map: {
+        self.execute: $_, $env;
+    };
 }
 
 multi method execute-ast(Scheme::AST::Set $ast, $env) {
