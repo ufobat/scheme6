@@ -15,13 +15,13 @@ sub get-build-ins() {
     %map{ '<' }   = sub ($a, $b) { $a < $b   };
     %map{ '<=' }  = sub ($a, $b) { $a <= $b  };
     %map{ '>=' }  = sub ($a, $b) { $a >= $b  };
-    %map{ '=' }  = sub ($a, $b) { $a == $b  };   # numeric
+    %map{ '=' }  = sub ($a, $b)  { $a == $b  };   # numeric
     %map<sqrt>    = sub ($a)     { sqrt($a)  };
     %map<display> = sub ($a)     { say $a    };
     %map<pi>      = pi;
     %map<π>       = pi;
-    %map<cdr>     = sub (*@a)    { @a[1..*].Array  };
-    %map<car>     = sub (*@a)    { @a[0]     };
+    %map<cdr>     = sub ($a)     { $a[1..*].Array  };
+    %map<car>     = sub ($a)     { $a[0]     };
     %map<list>    = sub (*@a)    { @a        };
     %map<eq?>     = sub ($a, $b) { $a === $b };   # object identity
     %map<eqv?>    = sub ($a, $b) { $a === $b };   # object identity
