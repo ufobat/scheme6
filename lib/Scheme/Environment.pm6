@@ -26,6 +26,7 @@ sub get-build-ins() {
     %map<eq?>     = sub ($a, $b) { $a === $b };   # object identity
     %map<eqv?>    = sub ($a, $b) { $a === $b };   # object identity
     %map<equal?>  = sub ($a, $b) { $a eqv $b };   # objects contain the same
+    %map{'s6:depth'} = sub () { +( Backtrace.new.Str ~~ m:g/\n/ ) };
     return %map;
 }
 
