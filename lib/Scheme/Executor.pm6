@@ -21,7 +21,7 @@ method execute($ast, $env = $.env) {
 
 multi method execute-ast(Scheme::AST::Expressions $ast, $env) {
     if $ast.expressions.elems == 1 {
-        return self.execute($ast.expressions[0], $env);
+        return self.execute-ast($ast.expressions[0], $env);
     }
     else {
         my $first_ast       = $ast.expressions[0];
@@ -29,21 +29,35 @@ multi method execute-ast(Scheme::AST::Expressions $ast, $env) {
             context => $ast.context,
             expressions => $ast.expressions[1..*],
         );
-        self.execute: $first_ast, $env;
-        return sub { self.execute: $expressions_ast, $env} but Thunk;
+        self.execute-ast: $first_ast, $env;
+        return sub { self.execute-ast: $expressions_ast, $env} but Thunk;
     }
 }
 
 multi method execute-ast(Scheme::AST::ProcCall $ast where so $ast.identifier, $env) {
     my &proc = $env.lookup($ast.identifier);
-    proc |$ast.expressions.map: {
+
+    my @param = $ast.expressions.map: {
         self.execute: $_, $env;
     };
+    # scheme lambdas get trampolined
+    #say $ast.identifier, ' -> ', @param.perl;
+
+    if &proc ~~ Thunk {
+        my &thunk = sub {
+            #Backtrace.new.Str.say;
+            return proc |@param } but Thunk;
+        return &thunk;
+    }
+    # build-ins get executed
+    return proc |@param;
 }
 multi method execute-ast(Scheme::AST::ProcCall $ast where not so $ast.identifier, $env) {
-    my &proc = self.execute($ast.lambda, $env);
+    #say "proc call without identifier";
+    #say $ast.perl;
+    my &proc = self.execute-ast($ast.lambda, $env);
     proc |$ast.expressions.map: {
-        self.execute: $_, $env;
+        self.execute-ast: $_, $env;
     };
 }
 
@@ -52,7 +66,7 @@ multi method execute-ast(Scheme::AST::Set $ast, $env) {
     $env.update: $ast.identifier => $val;
 }
 multi method execute-ast(Scheme::AST::Definition $ast, $env) {
-    my $val = self.execute($ast.expression, $env);
+    my $val = self.execute-ast($ast.expression, $env);
     $env.set: $ast.identifier => $val;
 }
 multi method execute-ast(Scheme::AST::Symbol $ast, $env) {
@@ -70,14 +84,14 @@ multi method execute-ast(Scheme::AST::Lambda $ast, $env) {
         }
 
         for $ast.expressions {
-            my $x = self.execute: $_, $scope;
+            my $x = self.execute-ast: $_, $scope;
             LAST { return $x }
         }
-    }
+    } but Thunk;
 }
 multi method execute-ast(Scheme::AST::Conditional $ast, $env) {
-    my $val = self.execute($ast.expression, $env);
-    self.execute($val ?? $ast.conseq !! $ast.alt, $env);
+    my $val = self.execute-ast($ast.expression, $env);
+    self.execute-ast($val ?? $ast.conseq !! $ast.alt, $env);
 }
 multi method execute-ast(Scheme::AST::Quote $ast, $env) {
     return $ast.datum;
