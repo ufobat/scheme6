@@ -58,7 +58,10 @@ multi method list-to-ast(DefineSymbol $, SymbolList $identifier, $expression, :%
         expression => Scheme::AST::Lambda.new(
             context => $current_context,
             params  => $identifier.values.map(*.identifier),
-            expressions => self.to-ast($expression, :%context)
+            expressions => Scheme::AST::Expressions.new(
+                context => $current_context,
+                expressions => self.to-ast($expression, :%context),
+            )
         )
     );
 }
@@ -90,7 +93,10 @@ multi method list-to-ast(LambdaSymbol $, SymbolList $params, $expressions, :%con
     Scheme::AST::Lambda.new:
         context     => $current_context,
         params      => $params.values.map(*.identifier),
-        expressions => self.to-ast($expressions, :%context)
+        expressions => Scheme::AST::Expressions.new(
+            context => $current_context,
+            expressions => self.to-ast($expressions, :%context),
+        )
 }
 
 # rule proc-or-macro-call:sym<lambda> { '(' <lambda> ')' <expression>* }
