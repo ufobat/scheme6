@@ -43,6 +43,16 @@ method set(Pair $p) {
     %.map{$p.key} = $p.value;
 }
 
+# updates the variable in the scope it was defined!
+method update(Pair $p) {
+    if %!map{ $p.key }:exists {
+        %!map{ $p.key } = $p.value;
+    } elsif $!parent {
+        return $!parent.update($p);
+    }
+    die "'$p.key' not found" unless %.map{$p.key}:exists;
+}
+
 # construction of environments
 method get-global-environment(Scheme::Environment:U: ) {
     self.new: map => get-build-ins;

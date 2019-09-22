@@ -22,6 +22,19 @@ multi method list-to-ast(IfSymbol $, $expression, $conseq, $alt, :%context, :$cu
         alt        => self.to-ast($alt,        :%context);
 }
 
+# rule set:sym<simple> {
+#     'set!' <identifier> <expression>
+# }
+subset SetSymbol of Scheme::AST::Symbol where *.identifier eq 'set!';
+multi method list-to-ast(SetSymbol $, Scheme::AST::Symbol $sym, $expression, :%context, :$current_context) {
+    # say "DefinitionSimple";
+    Scheme::AST::Set.new:
+        context    => $current_context,
+        identifier => $sym.identifier,
+        expression => self.to-ast($expression, :%context),
+}
+
+
 # rule definition:sym<simple> {
 #     'define' <identifier> <expression>
 # }

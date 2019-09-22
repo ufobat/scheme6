@@ -23,6 +23,10 @@ multi method execute(Scheme::AST::ProcCall $ast, $env = $.env) {
     };
 }
 
+multi method execute(Scheme::AST::Set $ast, $env = $.env) {
+    my $val = self.execute($ast.expression, $env);
+    $env.update: $ast.identifier => $val;
+}
 multi method execute(Scheme::AST::Definition $ast, $env = $.env) {
     my $val = self.execute($ast.expression, $env);
     $env.set: $ast.identifier => $val;

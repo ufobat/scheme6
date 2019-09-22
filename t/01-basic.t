@@ -160,5 +160,20 @@ subtest {
     is evaluate($ast), 'N';
 }, 'macro';
 
+subtest {
+    $scheme-code = Q{
+        (define x 3)
+        (define (set-x-to newval)
+          (
+            (set! x newval)
+          )
+        )
+        (set-x-to 4)
+        x
+    };
+    $ast = test-parse($scheme-code);
+    is evaluate($ast), 4;
+}, 'set!';
+
 done-testing;
 
