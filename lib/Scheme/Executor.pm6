@@ -15,9 +15,7 @@ has Scheme::Environment $.env is required;
 
 method execute($ast, $env = $.env) {
     my $v = execute-ast(self, $ast, $env);
-    # say $v.WHAT , ' is ', $v;
     while $v.does(Thunk) {
-        # say $v.WHAT , ' is ', $v;
         $v = $v.();
     }
     return $v;
@@ -25,7 +23,6 @@ method execute($ast, $env = $.env) {
 
 multi sub execute-ast($executor, Scheme::AST::Expressions $ast, $env) {
     if $ast.expressions.elems == 1 {
-        #say $ast.expressions[0].WHAT;
         return sub { execute-ast($executor, $ast.expressions[0], $env) } but Thunk;
         # return execute-ast($executor, $ast.expressions[0], $env);
     }
@@ -35,7 +32,7 @@ multi sub execute-ast($executor, Scheme::AST::Expressions $ast, $env) {
             context => $ast.context,
             expressions => $ast.expressions[1..*],
         );
-        #execute-ast $executor, $first_ast, $env;
+
         $executor.execute( $first_ast, $env );
         return sub { execute-ast($executor, $expressions_ast, $env) } but Thunk;
     }
@@ -43,27 +40,20 @@ multi sub execute-ast($executor, Scheme::AST::Expressions $ast, $env) {
 
 multi sub execute-ast($executor, Scheme::AST::ProcCall $ast where so $ast.identifier, $env) {
     my &proc = $env.lookup($ast.identifier);
-
     my @param = $ast.expressions.map: {
         $executor.execute: $_, $env;
     };
-    # scheme lambdas get trampolined
-    #say $ast.identifier, ' -> ', @param.perl;
 
     if &proc ~~ Lambda {
-        my &thunk = sub {
-            #Backtrace.new.Str.say;
-            return proc |@param
-        } but Thunk;
-        return &thunk;
+        return sub { proc |@param } but Thunk;
     }
     if &proc ~~ Thunk { warn "WTF?" }
+
     # build-ins get executed
     return proc |@param;
 }
 multi sub execute-ast($executor, Scheme::AST::ProcCall $ast where not so $ast.identifier, $env) {
-    #say "proc call without identifier";
-    #say $ast.perl;
+
     my &proc = execute-ast($executor, $ast.lambda, $env);
     proc |$ast.expressions.map: {
         execute-ast $executor, $_, $env;
@@ -92,15 +82,7 @@ multi sub execute-ast($executor, Scheme::AST::Lambda $ast, $env) {
             $scope.set: $name => shift @a
         }
 
-        # TODO Lambda schould have Scheme::AST::Expressions instead of list of $expressions.
-        # return sub { $executor.execute($ast.expressions, $scope) } but Thunk;
         return sub { execute-ast($executor, $ast.expressions, $scope) } but Thunk;
-        # return sub {
-        # for $ast.expressions {
-        #     my $x = $executor.execute($_, $scope);
-        #     LAST { return $x }
-        # }
-        # } but Thunk;
     } but Lambda;
 }
 multi sub execute-ast($executor, Scheme::AST::Conditional $ast, $env) {
